@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="社團意願與時段調查系統 - 專為團體成員打造的活動意願、社團偏好與時段統計平台">
+  <title>社團意願與時段調查系統 | 即時統計看板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 背景流光漸層裝飾 -->
+  <div class="bg-mesh" aria-hidden="true"></div>
+
+  <!-- 頂部導覽列 -->
+  <header class="app-header">
+    <div class="container header-content">
+      <div class="brand">
+        <span class="brand-icon">✨</span>
+        <div class="brand-text">
+          <h1 class="brand-title">社團意願與時段調查</h1>
+          <p class="brand-subtitle">Club Survey & Availability Dashboard</p>
+        </div>
+      </div>
+
+      <!-- 頂部雲端同步與分頁切換 -->
+      <div class="header-actions-group">
+        <div id="cloud-sync-status" class="cloud-sync-badge" title="點擊開啟雲端同步設定">
+          <span id="sync-dot-indicator" class="sync-dot online"></span>
+          <span id="sync-status-text">雲端連線中</span>
+        </div>
+
+        <!-- 導覽切換按鈕 -->
+        <nav class="nav-tabs" aria-label="分頁導覽">
+          <button id="tab-survey-btn" class="nav-tab-btn active" data-tab="survey" type="button">
+            <span class="tab-icon">📝</span>
+            <span>問卷填寫</span>
+          </button>
+          <button id="tab-dashboard-btn" class="nav-tab-btn" data-tab="dashboard" type="button">
+            <span class="tab-icon">📊</span>
+            <span>統計看板</span>
+            <span id="response-count-badge" class="badge-count">0</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <!-- ==================== 頁面一：問卷填寫區 ==================== -->
+    <section id="view-survey" class="view-section active">
+      <div class="survey-card-wrapper">
+        <div class="survey-header-banner">
+          <div class="banner-badge">名冊專屬問卷</div>
+          <h2 class="survey-headline">歡迎填寫社團意願調查</h2>
+          <p class="survey-description">
+            請選擇您的姓名，並告訴我們您想參加的社團與合適時段。您的回覆將會即時匯總於統計看板，協助大家安排最適合的活動時間！
+          </p>
+        </div>
+
+        <form id="survey-form" class="survey-form" novalidate>
+          <!-- 第 1 題：選擇填寫人 -->
+          <div class="form-card" id="card-member-select">
+            <div class="question-header">
+              <span class="question-num">1</span>
+              <div>
+                <label for="member-select" class="question-title">請選擇您的姓名 <span class="required-star">*</span></label>
+                <p class="question-hint">請在名冊中尋找您的名字（已排除名單外成員）</p>
+              </div>
+            </div>
+
+            <div class="select-wrapper">
+              <select id="member-select" name="memberName" class="form-select" required>
+                <option value="" disabled selected>請點擊此處選擇您的姓名...</option>
+                <!-- 由 JS 動態填入 21 人名冊 -->
+              </select>
+            </div>
+
+            <div id="already-filled-alert" class="already-filled-alert hidden" role="alert">
+              <span class="alert-icon">ℹ️</span>
+              <div class="alert-text">
+                <strong>您已填寫過此問卷！</strong>
+                <span>下方已自動載入您先前的回覆，您可以修改後重新送出以更新內容。</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 第 2 題：參與意願 -->
+          <div class="form-card" id="card-willingness">
+            <div class="question-header">
+              <span class="question-num">2</span>
+              <div>
+                <span class="question-title">是否有意願參與社團？ <span class="required-star">*</span></span>
+                <p class="question-hint">請選擇您的參與意向</p>
+              </div>
+            </div>
+
+            <div class="radio-grid">
+              <label class="radio-card">
+                <input type="radio" name="willingness" value="high" required>
+                <div class="radio-card-body">
+                  <span class="radio-icon">🎉</span>
+                  <div class="radio-title">非常有誠意／願意參加</div>
+                  <div class="radio-desc">很期待社團活動，時間能配合就會出席！</div>
+                </div>
+              </label>
+
+              <label class="radio-card">
+                <input type="radio" name="willingness" value="medium">
+                <div class="radio-card-body">
+                  <span class="radio-icon">⚖️</span>
+                  <div class="radio-title">視時間與內容而定／考慮中</div>
+                  <div class="radio-desc">想看最後決定的社團項目與固定時段再決定。</div>
+                </div>
+              </label>
+
+              <label class="radio-card">
+                <input type="radio" name="willingness" value="low">
+                <div class="radio-card-body">
+                  <span class="radio-icon">💤</span>
+                  <div class="radio-title">暫無意願參加</div>
+                  <div class="radio-desc">近期時間較緊湊或無適合社團，暫不出席。</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- 第 3 題：想參加什麼社團 (可複選) -->
+          <div class="form-card" id="card-clubs">
+            <div class="question-header">
+              <span class="question-num">3</span>
+              <div>
+                <span class="question-title">想要參加什麼社團？ <span class="tag-badge">可複選</span></span>
+                <p class="question-hint">請勾選您感興趣的社團（可同時選多項，若無意願可跳過）</p>
+              </div>
+            </div>
+
+            <div class="checkbox-grid clubs-grid">
+              <label class="checkbox-card" data-club="drama">
+                <input type="checkbox" name="clubs" value="戲劇社" id="club-drama">
+                <div class="checkbox-card-body">
+                  <div class="card-icon-title">
+                    <span class="club-emoji">🎭</span>
+                    <span class="club-num-tag">1</span>
+                  </div>
+                  <h3 class="club-name">戲劇社</h3>
+                  <p class="club-desc">肢體即興演出、劇本排練、角色詮釋與舞臺戲劇體驗</p>
+                </div>
+              </label>
+
+              <label class="checkbox-card" data-club="choir">
+                <input type="checkbox" name="clubs" value="合唱團" id="club-choir">
+                <div class="checkbox-card-body">
+                  <div class="card-icon-title">
+                    <span class="club-emoji">🎶</span>
+                    <span class="club-num-tag">2</span>
+                  </div>
+                  <h3 class="club-name">合唱團</h3>
+                  <p class="club-desc">合聲練唱、發聲技巧、重唱與多聲部旋律音樂交流</p>
+                </div>
+              </label>
+
+              <label class="checkbox-card" data-club="instrument">
+                <input type="checkbox" name="clubs" value="樂器" id="club-instrument">
+                <div class="checkbox-card-body">
+                  <div class="card-icon-title">
+                    <span class="club-emoji">🎸</span>
+                    <span class="club-num-tag">3</span>
+                  </div>
+                  <h3 class="club-name">樂器</h3>
+                  <p class="club-desc">吉他、烏克麗麗、鋼琴、弦樂器彈奏練習與樂團合奏</p>
+                </div>
+              </label>
+
+              <label class="checkbox-card" data-club="cooking">
+                <input type="checkbox" name="clubs" value="廚藝" id="club-cooking">
+                <div class="checkbox-card-body">
+                  <div class="card-icon-title">
+                    <span class="club-emoji">🍳</span>
+                    <span class="club-num-tag">4</span>
+                  </div>
+                  <h3 class="club-name">廚藝</h3>
+                  <p class="club-desc">家常料理、甜點烘焙、刀工技法與品味美食共享樂趣</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- 第 4 題：方便參加的時間 (可複選 + 其他打字) -->
+          <div class="form-card" id="card-time-slots">
+            <div class="question-header">
+              <span class="question-num">4</span>
+              <div>
+                <span class="question-title">方便參加的時間？ <span class="tag-badge">可複選</span></span>
+                <p class="question-hint">請勾選您平日或週末有空出席的時段（可複選多個）</p>
+              </div>
+            </div>
+
+            <!-- 平日晚上群組 -->
+            <div class="time-group">
+              <h4 class="time-group-title">
+                <span class="group-icon">🌙</span>
+                <span>平日晚上（星期一至星期五）</span>
+              </h4>
+              <div class="time-slots-grid">
+                <label class="time-chip">
+                  <input type="checkbox" name="timeSlots" value="星期一 晚上" id="time-mon-night">
+                  <span class="chip-label">星期一 晚上</span>
+                </label>
+                <label class="time-chip">
+                  <input type="checkbox" name="timeSlots" value="星期二 晚上" id="time-tue-night">
+                  <span class="chip-label">星期二 晚上</span>
+                </label>
+                <label class="time-chip">
+                  <input type="checkbox" name="timeSlots" value="星期三 晚上" id="time-wed-night">
+                  <span class="chip-label">星期三 晚上</span>
+                </label>
+                <label class="time-chip">
+                  <input type="checkbox" name="timeSlots" value="星期四 晚上" id="time-thu-night">
+                  <span class="chip-label">星期四 晚上</span>
+                </label>
+                <label class="time-chip">
+                  <input type="checkbox" name="timeSlots" value="星期五 晚上" id="time-fri-night">
+                  <span class="chip-label">星期五 晚上</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 週末時段群組 -->
+            <div class="time-group">
+              <h4 class="time-group-title">
+                <span class="group-icon">☀️</span>
+                <span>週末時段（星期六、日）</span>
+              </h4>
+              <div class="time-slots-grid weekend-grid">
+                <label class="time-chip highlight-weekend">
+                  <input type="checkbox" name="timeSlots" value="星期六 早上" id="time-sat-morning">
+                  <span class="chip-label">星期六 早上</span>
+                </label>
+                <label class="time-chip highlight-weekend">
+                  <input type="checkbox" name="timeSlots" value="星期六 晚上" id="time-sat-night">
+                  <span class="chip-label">星期六 晚上</span>
+                </label>
+                <label class="time-chip highlight-weekend">
+                  <input type="checkbox" name="timeSlots" value="星期日 早上" id="time-sun-morning">
+                  <span class="chip-label">星期日 早上</span>
+                </label>
+                <label class="time-chip highlight-weekend">
+                  <input type="checkbox" name="timeSlots" value="星期日 晚上" id="time-sun-night">
+                  <span class="chip-label">星期日 晚上</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 其他時段輸入 -->
+            <div class="time-other-wrapper">
+              <div class="other-checkbox-row">
+                <label class="time-chip other-chip">
+                  <input type="checkbox" id="time-other-check" name="timeOtherCheck">
+                  <span class="chip-label">✏️ 其他時段（自訂）</span>
+                </label>
+                <span class="other-hint">勾選後可於下方打字填寫</span>
+              </div>
+              <div id="other-input-container" class="other-input-container hidden">
+                <input type="text" id="time-other-text" name="timeOtherText" class="form-input" placeholder="例如：週末下午 14:00~17:00、彈性皆可、隔週出席等...">
+              </div>
+            </div>
+          </div>
+
+          <!-- 補充說明／留言 (選填) -->
+          <div class="form-card" id="card-notes">
+            <div class="question-header">
+              <span class="question-num">5</span>
+              <div>
+                <label for="survey-notes" class="question-title">備註或想對大家說的話 <span class="tag-badge optional">選填</span></label>
+                <p class="question-hint">有任何特殊需求、建議或想法都歡迎留言</p>
+              </div>
+            </div>
+            <textarea id="survey-notes" name="notes" class="form-textarea" rows="3" placeholder="請在此輸入您的補充說明（選填）..."></textarea>
+          </div>
+
+          <!-- 提交按鈕與操作區 -->
+          <div class="form-actions">
+            <button type="submit" id="submit-survey-btn" class="btn btn-primary btn-large">
+              <span class="btn-icon">🚀</span>
+              <span id="submit-btn-text">確認並送出問卷</span>
+            </button>
+            <button type="button" id="reset-survey-btn" class="btn btn-secondary">
+              重設表單
+            </button>
+          </div>
+        </form>
+
+        <!-- 提交成功彈窗 Modal -->
+        <div id="success-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <div class="modal-card">
+            <div class="success-icon-animation">✅</div>
+            <h3 id="modal-title" class="modal-title">回覆已成功送出！</h3>
+            <p id="modal-message" class="modal-desc">
+              感謝您的填寫！您的選擇已即時記錄並同步更新至統計看板。
+            </p>
+            <div class="modal-actions">
+              <button type="button" id="modal-go-dashboard" class="btn btn-primary">
+                📊 前往查看統計看板
+              </button>
+              <button type="button" id="modal-close" class="btn btn-secondary">
+                留在填寫頁
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 頁面二：主辦人統計看板區 ==================== -->
+    <section id="view-dashboard" class="view-section">
+      <!-- 看板頂部工具列 -->
+      <div class="dashboard-toolbar">
+        <div>
+          <h2 class="dashboard-title">社團意願與時段即時統計看板</h2>
+          <p class="dashboard-subtitle">即時追蹤名冊 21 人填寫狀況、社團得票排行與最佳開課時段</p>
+        </div>
+        <div class="toolbar-actions">
+          <button id="btn-sync-now" class="btn btn-outline" type="button" title="立即從雲端重新整理最新填寫資料">
+            <span id="sync-spin-icon">🔄</span> 即時同步
+          </button>
+          <button id="btn-copy-report" class="btn btn-outline accent-btn" type="button" title="複製排版文字，可直接貼到 LINE 群組">
+            <span>📋</span> 複製 LINE 快報
+          </button>
+          <button id="btn-share-link" class="btn btn-outline" type="button" title="複製專屬同頻道問卷網址分享給群組成員">
+            <span>🔗</span> 分享問卷
+          </button>
+          <button id="btn-cloud-config" class="btn btn-outline" type="button" title="設定雲端同步房間或 Google 試算表">
+            <span>☁️</span> 雲端設定
+          </button>
+          <button id="btn-export-csv" class="btn btn-outline" type="button" title="匯出 Excel / CSV 表格">
+            <span>📥</span> 匯出 CSV
+          </button>
+          <button id="btn-mock-data" class="btn btn-outline" type="button" title="隨機產生示範填寫資料以供預覽">
+            <span>🎲</span> 示範資料
+          </button>
+          <button id="btn-clear-data" class="btn btn-outline danger-btn" type="button" title="清除所有填寫紀錄">
+            <span>🗑️</span> 清空
+          </button>
+        </div>
+      </div>
+
+      <!-- 雲端同步狀態與引導橫幅 -->
+      <div id="cloud-sync-notice-banner" class="cloud-sync-banner unconfigured">
+        <div class="banner-icon">📡</div>
+        <div class="banner-body">
+          <div class="banner-title">目前為「單機測試模式」：填寫資料僅保存在此裝置</div>
+          <div class="banner-desc">若要讓名冊成員在各自手機填寫後，主辦人能在電腦/手機看板自動即時匯總，請串接 Google 試算表（完全免費、永久保存、只要 1 分鐘即可設定完成）。</div>
+        </div>
+        <button id="btn-banner-connect-cloud" class="btn btn-primary btn-sm" type="button">
+          ⚡ 1 分鐘連線 Google 試算表
+        </button>
+      </div>
+
+      <!-- 核心指標概覽卡片 -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">填寫進度</span>
+            <span class="metric-icon">📋</span>
+          </div>
+          <div class="metric-value-row">
+            <span id="metric-filled-count" class="metric-number">0</span>
+            <span class="metric-total">/ <span id="metric-roster-total">21</span> 人</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="metric-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+          <div class="metric-subtext">填寫率 <span id="metric-fill-rate">0%</span></div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">參與意願分佈</span>
+            <span class="metric-icon">✨</span>
+          </div>
+          <div class="willingness-summary-row">
+            <div class="will-pill will-high">
+              <span class="will-pill-num" id="metric-will-high">0</span>
+              <span class="will-pill-label">有意願</span>
+            </div>
+            <div class="will-pill will-medium">
+              <span class="will-pill-num" id="metric-will-medium">0</span>
+              <span class="will-pill-label">考慮中</span>
+            </div>
+            <div class="will-pill will-low">
+              <span class="will-pill-num" id="metric-will-low">0</span>
+              <span class="will-pill-label">暫無</span>
+            </div>
+          </div>
+          <div class="metric-subtext">意向比率即時統計</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">最熱門社團</span>
+            <span class="metric-icon">🏆</span>
+          </div>
+          <div class="metric-value-row">
+            <span id="metric-top-club" class="metric-highlight">-</span>
+          </div>
+          <div class="metric-subtext" id="metric-top-club-votes">尚無投票</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">最多人合適時段</span>
+            <span class="metric-icon">⏰</span>
+          </div>
+          <div class="metric-value-row">
+            <span id="metric-top-slot" class="metric-highlight">-</span>
+          </div>
+          <div class="metric-subtext" id="metric-top-slot-votes">尚無選擇</div>
+        </div>
+      </div>
+
+      <!-- 21 人名冊填寫狀態追蹤盤 -->
+      <div class="dashboard-card">
+        <div class="card-section-header">
+          <div>
+            <h3 class="card-section-title">👥 成員名冊填寫追蹤（共 21 人，已排除劉禹恩）</h3>
+            <p class="card-section-subtitle">點擊已填寫人名可直接彈窗檢視其選擇；點擊未填寫人名可代為填寫</p>
+          </div>
+          <div class="roster-filters">
+            <button class="filter-pill active" data-roster-filter="all">全部 (21)</button>
+            <button class="filter-pill" data-roster-filter="filled">已填寫 (<span id="filter-filled-count">0</span>)</button>
+            <button class="filter-pill" data-roster-filter="unfilled">未填寫 (<span id="filter-unfilled-count">21</span>)</button>
+          </div>
+        </div>
+        <div id="roster-grid" class="roster-grid">
+          <!-- 由 JS 動態產生 21 人的標籤卡片 -->
+        </div>
+      </div>
+
+      <!-- 統計圖表雙欄：社團排行 & 時段熱門度 -->
+      <div class="charts-dual-grid">
+        <!-- 社團人氣排行 -->
+        <div class="dashboard-card">
+          <div class="card-section-header">
+            <div>
+              <h3 class="card-section-title">🎭 社團選擇意向統計（可複選）</h3>
+              <p class="card-section-subtitle">戲劇社、合唱團、樂器、廚藝各社團投票分佈</p>
+            </div>
+          </div>
+          <div id="club-stats-list" class="stats-bar-list">
+            <!-- 由 JS 渲染 4 個社團的動態長條圖 -->
+          </div>
+        </div>
+
+        <!-- 最佳時段分佈熱力分析 -->
+        <div class="dashboard-card">
+          <div class="card-section-header">
+            <div>
+              <h3 class="card-section-title">⏰ 時段熱門度排行（平日晚上 vs 週末早晚）</h3>
+              <p class="card-section-subtitle">找出最多夥伴同時有空的黃金時段</p>
+            </div>
+          </div>
+          <div id="timeslot-stats-list" class="stats-bar-list">
+            <!-- 由 JS 渲染時段排序長條圖 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 自訂「其他時段」與留言備註彙總 -->
+      <div class="dashboard-card">
+        <div class="card-section-header">
+          <div>
+            <h3 class="card-section-title">💬 其他時段打字輸入與補充備註</h3>
+            <p class="card-section-subtitle">收集成員自訂的時間需求與個人回饋意見</p>
+          </div>
+          <span id="custom-notes-count" class="badge-tag">0 則紀錄</span>
+        </div>
+        <div id="custom-notes-list" class="custom-notes-container">
+          <!-- 由 JS 渲染其他時段與備註 -->
+        </div>
+      </div>
+
+      <!-- 回覆明細資料總表 -->
+      <div class="dashboard-card">
+        <div class="card-section-header">
+          <div>
+            <h3 class="card-section-title">📑 完整填寫名冊明細表</h3>
+            <p class="card-section-subtitle">可依姓名或社團快速搜尋篩選，方便核對所有資訊</p>
+          </div>
+          <div class="table-search-box">
+            <input type="search" id="table-search-input" class="search-input" placeholder="🔍 搜尋姓名或社團...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>姓名</th>
+                <th>參與意願</th>
+                <th>想參加的社團</th>
+                <th>方便出席時段</th>
+                <th>自訂時段／備註</th>
+                <th>填寫時間</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="responses-table-body">
+              <!-- 由 JS 渲染詳細表格資料 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 成員回覆詳情彈窗 Modal -->
+  <div id="member-detail-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card modal-detail-card">
+      <div class="modal-header-row">
+        <div class="detail-user-badge">
+          <span class="user-avatar-circle">👤</span>
+          <div>
+            <h3 id="detail-member-name" class="detail-title">成員姓名</h3>
+            <span id="detail-fill-status" class="status-badge">狀態</span>
+          </div>
+        </div>
+        <button type="button" id="detail-modal-close" class="close-btn" aria-label="關閉">✕</button>
+      </div>
+
+      <div id="detail-modal-body" class="detail-body">
+        <!-- JS 動態插入內容 -->
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="detail-edit-btn" class="btn btn-primary">
+          ✏️ 以此人身分修改資料
+        </button>
+        <button type="button" id="detail-delete-btn" class="btn btn-outline danger-btn">
+          🗑️ 清除此人回覆
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINE 快報預覽與複製彈窗 Modal -->
+  <div id="line-report-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card modal-report-card">
+      <div class="modal-header-row">
+        <div class="detail-user-badge">
+          <span class="user-avatar-circle" style="background: linear-gradient(135deg, #06c755, #00b900);">📢</span>
+          <div>
+            <h3 class="detail-title">LINE 即時統計快報</h3>
+            <span class="status-badge badge-will-high">已同步最新資料</span>
+          </div>
+        </div>
+        <button type="button" id="line-report-close" class="close-btn" aria-label="關閉">✕</button>
+      </div>
+
+      <div class="report-hint">
+        <span>💡</span> 提示：若手機或 LINE 內嵌瀏覽器限制自動剪貼簿，可直接點擊下方「全選文字」手動複製。
+      </div>
+
+      <pre id="line-report-text-pre" class="report-preview-box" tabindex="0"></pre>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-copy-report-again" class="btn btn-primary" style="flex: 2; background: linear-gradient(135deg, #06c755, #009900);">
+          📋 複製快報至剪貼簿
+        </button>
+        <button type="button" id="btn-select-all-report" class="btn btn-secondary">
+          🔍 全選文字
+        </button>
+        <button type="button" id="line-report-modal-close-btn" class="btn btn-secondary">
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 雲端同步與 Google 試算表設定彈窗 Modal -->
+  <div id="cloud-settings-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card modal-settings-card">
+      <div class="modal-header-row">
+        <div class="detail-user-badge">
+          <span class="user-avatar-circle">☁️</span>
+          <div>
+            <h3 class="detail-title">雲端同步與連線設定</h3>
+            <span id="settings-status-badge" class="status-badge badge-will-high">已啟用雲端即時同步</span>
+          </div>
+        </div>
+        <button type="button" id="cloud-settings-close" class="close-btn" aria-label="關閉">✕</button>
+      </div>
+
+      <!-- 設定分頁切換 -->
+      <div class="settings-tabs">
+        <button type="button" class="settings-tab-btn active" data-settings-tab="sheet">📊 Google 試算表（推薦）</button>
+        <button type="button" class="settings-tab-btn" data-settings-tab="room">🌐 雲端房間代碼</button>
+        <button type="button" class="settings-tab-btn" data-settings-tab="backup">📋 同步代碼備份</button>
+      </div>
+
+      <!-- 滾動內容容器 -->
+      <div class="modal-scroll-body">
+        <!-- 分頁一：Google 試算表（預設推薦） -->
+        <div id="tab-settings-sheet" class="settings-section active">
+          <div class="step-card step-intro-card">
+            <div class="step-header">
+              <span class="step-intro-icon">📊</span>
+              <strong class="step-title">串接 Google 試算表（完全免費、永久保存）</strong>
+            </div>
+            <p class="step-desc">
+              只要設定一次，名冊成員在手機點開填寫的所有意願與時段，將<strong>自動即時寫入您的 Google 試算表</strong>，主辦人打開此看板或複製 LINE 快報時也會自動即時匯總！
+            </p>
+          </div>
+
+          <div class="steps-flow-container">
+            <!-- 步驟 1 -->
+            <div class="step-card">
+              <div class="step-header">
+                <span class="step-tag">步驟 1</span>
+                <strong class="step-title">建立 Google 試算表</strong>
+              </div>
+              <p class="step-desc">點擊下方按鈕開啟空白試算表，進入上方選單「擴充功能」>「Apps Script」：</p>
+              <a href="https://sheets.new" target="_blank" rel="noopener" class="btn btn-outline btn-step-action">
+                📄 開啟新的 Google 試算表 (sheets.new)
+              </a>
+            </div>
+
+            <!-- 步驟 2 -->
+            <div class="step-card">
+              <div class="step-header">
+                <span class="step-tag">步驟 2</span>
+                <strong class="step-title">貼上後端同步腳本</strong>
+              </div>
+              <p class="step-desc">清空 Apps Script 編輯器內原本文字，點擊下方「一鍵複製」按鈕，貼入編輯器後按儲存（Ctrl+S）：</p>
+              <button type="button" id="btn-copy-gas-code" class="btn btn-primary btn-copy-gas-code">
+                📋 一鍵複製後端腳本代碼
+              </button>
+              <pre class="code-snippet-box" id="gas-script-code">// Google Apps Script - 社團問卷即時雲端同步
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var rows = sheet.getDataRange().getValues();
+  var data = {};
+  if (rows.length > 1) {
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i];
+      if (r[0]) {
+        var name = String(r[0]).trim();
+        data[name] = {
+          name: name,
+          willingness: r[1] || '',
+          willingnessText: r[2] || '',
+          clubs: r[3] ? String(r[3]).split(';').map(function(s){return s.trim();}) : [],
+          timeSlots: r[4] ? String(r[4]).split(';').map(function(s){return s.trim();}) : [],
+          otherTime: r[5] ? String(r[5]) : '',
+          notes: r[6] ? String(r[6]) : '',
+          updatedAt: r[7] ? String(r[7]) : ''
+        };
+      }
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', data: data }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['姓名', '參與意願', '意向說明', '想參加社團', '出席時段', '自訂時段', '留言備註', '更新時間']);
+  }
+  var contents = e.postData.contents;
+  var payload = JSON.parse(contents);
+  var r = payload.data;
+  if (!r || !r.name) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  var rows = sheet.getDataRange().getValues();
+  var foundRow = -1;
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === String(r.name).trim()) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+  var rowData = [
+    r.name,
+    r.willingness || '',
+    r.willingnessText || '',
+    (r.clubs || []).join('; '),
+    (r.timeSlots || []).join('; '),
+    r.otherTime || '',
+    r.notes || '',
+    r.updatedAt || ''
+  ];
+  if (foundRow > 0) {
+    sheet.getRange(foundRow, 1, 1, 8).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+            </div>
+
+            <!-- 步驟 3 -->
+            <div class="step-card">
+              <div class="step-header">
+                <span class="step-tag">步驟 3</span>
+                <strong class="step-title">發布為網頁應用程式並貼入網址</strong>
+              </div>
+              <p class="step-desc">點右上角「部署」>「新建部署」> 類型選「網頁應用程式」> <strong>「誰可以存取」設為「所有人」(Anyone)</strong>，將產生的網址貼在下方：</p>
+              <div class="setting-row" style="margin-top: 8px; margin-bottom: 8px;">
+                <input type="url" id="setting-gas-url" class="setting-input" placeholder="https://script.google.com/macros/s/.../exec">
+              </div>
+              <div class="gas-test-row">
+                <button type="button" id="btn-test-gas-conn" class="btn btn-outline btn-test-conn">
+                  🔍 測試連線狀態
+                </button>
+                <div id="gas-test-result" class="gas-test-result"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分頁二：雲端房間代碼 -->
+        <div id="tab-settings-room" class="settings-section">
+          <div class="step-card">
+            <strong>💡 跨裝置多人即時同步說明：</strong>
+            只要將問卷連結分享給名冊中的夥伴，大家在各自的手機點開填寫，系統即會自動透過同一個「雲端房間代碼」進行即時匯總。
+          </div>
+
+          <div class="setting-row">
+            <label for="setting-room-id" class="setting-label">雲端同步房間代碼 (Room ID)</label>
+            <input type="text" id="setting-room-id" class="setting-input" placeholder="例如：club-survey-2026" value="club-survey-2026">
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+              同一個房間代碼的使用者會共享同份統計數據。您也可以改成自訂的專屬代碼。
+            </p>
+          </div>
+
+          <div class="setting-row">
+            <button type="button" id="btn-copy-share-url" class="btn btn-outline accent-btn" style="width: 100%;">
+              🔗 複製包含此房間代碼的問卷網址（分享到 LINE 群組）
+            </button>
+          </div>
+        </div>
+
+        <!-- 分頁三：同步代碼備份與匯入 -->
+        <div id="tab-settings-backup" class="settings-section">
+          <div class="step-card">
+            <strong>離線也能同步：</strong>可將當前所有回覆打包為代碼字串，貼到另一台裝置即可立即合併同步。
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label">資料同步代碼 (JSON 格式)</label>
+            <textarea id="setting-sync-code-area" class="backup-textarea" placeholder="點擊下方「匯出最新代碼」查看，或在此貼上代碼並點擊匯入..."></textarea>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" id="btn-export-sync-code" class="btn btn-outline" style="flex: 1;">
+                📤 匯出最新同步代碼
+              </button>
+              <button type="button" id="btn-import-sync-code" class="btn btn-outline accent-btn" style="flex: 1;">
+                📥 貼上並合併匯入
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions settings-modal-actions">
+        <button type="button" id="btn-save-settings" class="btn btn-primary btn-save-action">
+          💾 儲存設定並立即連線同步
+        </button>
+        <button type="button" id="btn-cancel-settings" class="btn btn-secondary btn-cancel-action">
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 通知元件 -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <footer class="app-footer">
+    <div class="container footer-content">
+      <p>社團意願與時段調查系統 · 支援響應式手機與電腦瀏覽 · 本地資料自動儲存</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
